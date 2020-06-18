@@ -5,41 +5,49 @@
         <span :id="labelId">
           {{ label }}
         </span>
-        <div id="exp_wrapper">
-          <button
-            aria-haspopup="listbox"
-            :aria-labelledby="labelId + ' ' + buttonId"
-            :id="buttonId"
-            v-allyop-attribute-helper:aria-expanded.removeonfalse="
-              expandedListShown
-            "
-            class="allyop-select__button"
-            @click="toggleShown"
-            v-text="buttonText"
-          ></button>
-          <ul
-            id="exp_elem_list"
-            tabindex="-1"
-            class="allyop-select__list"
-            role="listbox"
-            v-allyop-attribute-helper:aria-activedescendant.removeonfalse="
-              activeDescendant
-            "
-            aria-labelledby="exp_elem"
-            :class="listClasses"
-          >
-            <li
-              v-for="item in innerItems"
-              :key="item.value"
-              :id="item.id"
-              role="option"
-              :class="{ focused: activeDescendant == item.id }"
-              @click="focusItem(item)"
+        <base-roving-focus
+          #default="{lstn}"
+          :items="innerItems"
+          :activeElementId.sync="activeDescendant"
+        >
+          <div id="exp_wrapper" v-on="lstn">
+            <button
+              aria-haspopup="listbox"
+              :aria-labelledby="labelId + ' ' + buttonId"
+              :id="buttonId"
+              v-attribute-helper:aria-expanded.removeonfalse="expandedListShown"
+              class="allyop-select__button"
+              @click="toggleShown"
+              v-text="buttonText"
+            ></button>
+            <ul
+              ref="listbox"
+              :id="listboxId"
+              tabindex="-1"
+              class="allyop-select__list"
+              role="listbox"
+              v-attribute-helper:aria-activedescendant.removeonfalse="
+                activeDescendant
+              "
+              :aria-labelledby="labelId"
+              :class="listClasses"
             >
-              {{ item.text }}
-            </li>
-          </ul>
-        </div>
+              <li
+                v-for="item in innerItems"
+                :key="item.value"
+                :id="item.id"
+                v-attribute-helper:aria-selected.removeonfalse="
+                  activeDescendant == item.id
+                "
+                role="option"
+                :class="{ focused: activeDescendant == item.id }"
+                @click="focusItem(item)"
+              >
+                {{ item.text }}
+              </li>
+            </ul>
+          </div>
+        </base-roving-focus>
       </div>
     </div>
   </div>
@@ -48,6 +56,7 @@
 import Vue from "vue";
 import attributeHelper from "../directives/attribute-helper";
 import IdGeneratorMixin from "../mixins/id-generator";
+import BaseRovingFocus from "./base/base-roving-focus.vue";
 
 export type allySelectItem = {
   text: string;
@@ -56,6 +65,9 @@ export type allySelectItem = {
 
 export default Vue.extend(IdGeneratorMixin).extend({
   name: "allyop-select",
+  components: {
+    BaseRovingFocus
+  },
   props: {
     label: {
       type: String,
@@ -69,6 +81,9 @@ export default Vue.extend(IdGeneratorMixin).extend({
   methods: {
     toggleShown() {
       this.expandedListShown = !this.expandedListShown;
+      if (this.expandedListShown && this.$refs.listbox) {
+        Vue.nextTick(() => (this.$refs.listbox as HTMLUListElement).focus());
+      }
     },
     focusItem(item: allySelectItem & { id: string }) {
       this.activeDescendant = item.id;
@@ -84,6 +99,7 @@ export default Vue.extend(IdGeneratorMixin).extend({
       buttonId: this.getId(),
       labelId: this.getId(),
       keyPrefix: this.getId(),
+      listboxId: this.getId(),
       buttonText: "Bitte Auswahl treffen",
       activeDescendant: null as string | null
     };
@@ -105,6 +121,9 @@ export default Vue.extend(IdGeneratorMixin).extend({
 </script>
 
 <style>
+*:focus {
+  outline: 3px blue solid !important;
+}
 .allyop-select__listbox-area {
   width: 100%;
   position: relative;
@@ -157,7 +176,7 @@ export default Vue.extend(IdGeneratorMixin).extend({
 }
 
 .allyop-select [role="option"][aria-selected="true"]::before {
-  content: "âœ“";
+  content: "⇨";
   position: absolute;
   left: 0.5em;
 }

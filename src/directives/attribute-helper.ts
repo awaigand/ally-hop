@@ -9,7 +9,7 @@ function render(el: HTMLElement, binding: DirectiveBinding): void {
   }
 }
 
-export default Vue.directive("allyop-attribute-helper", {
+export default Vue.directive("attribute-helper", {
   // When the bound element is inserted into the DOM...
   inserted: render,
   update: render
