@@ -15,20 +15,21 @@ export default Vue.extend({
     activeElementId: {
       type: String
     },
-    focusIdOnClose: {
-      type: String
-    },
     downTriggers: {
       type: Array as () => Array<string>,
-      default: () => ["ArrowDown", "enter"]
+      default: () => ["ArrowDown"]
     },
     upTriggers: {
       type: Array as () => Array<string>,
       default: () => ["ArrowUp"]
     },
+    enterTriggers: {
+      type: Array as () => Array<string>,
+      default: () => ["Enter"]
+    },
     closeTriggers: {
       type: Array as () => Array<string>,
-      default: () => ["esc"]
+      default: () => ["Escape"]
     }
   },
   render(): any {
@@ -43,12 +44,11 @@ export default Vue.extend({
   },
   mounted() {
     this.listeners = this.createListeners();
-    console.log(this.listeners);
   },
   methods: {
     createListeners(): any {
       const downs = this.downTriggers.reduce((obj, key) => {
-        obj["keyup"] = evt => this.moveFocusDown(evt);
+        obj["keyup"] = evt => this.handleKeystroke(evt);
         return obj;
       }, {});
 
@@ -57,14 +57,36 @@ export default Vue.extend({
     getActiveElementIndex(): number {
       return this.items.findIndex(x => x.id == this.activeElementId);
     },
-    moveFocusDown(event: KeyboardEvent): void {
+    moveFocusDown(): void {
+      let nextIndex = this.getActiveElementIndex() + 1;
+      if (nextIndex == this.items.length) {
+        nextIndex = 0;
+      }
+      return nextIndex;
+    },
+    moveFocusUp(): void {
+      let nextIndex = this.getActiveElementIndex() - 1;
+      if (nextIndex == -1) {
+        nextIndex = this.items.length - 1;
+      }
+      return nextIndex;
+    },
+    handleKeystroke(event: KeyboardEvent): void {
+      let nextIndex = 0;
       if (this.downTriggers.some(x => x == event.key)) {
         event.preventDefault();
-        let nextIndex = this.getActiveElementIndex() + 1;
-        if (nextIndex == this.items.length) {
-          nextIndex = 0;
-        }
+        nextIndex = this.moveFocusDown();
+        this.$emit("down");
         this.$emit("update:activeElementId", this.items[nextIndex].id);
+      } else if (this.upTriggers.some(x => x == event.key)) {
+        event.preventDefault();
+        nextIndex = this.moveFocusUp();
+        this.$emit("up");
+        this.$emit("update:activeElementId", this.items[nextIndex].id);
+      } else if (this.enterTriggers.some(x => x == event.key)) {
+        this.$emit("enter");
+      } else if (this.closeTriggers.some(x => x == event.key)) {
+        this.$emit("escape");
       }
     }
   }

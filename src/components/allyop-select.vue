@@ -9,15 +9,21 @@
           #default="{lstn}"
           :items="innerItems"
           :activeElementId.sync="activeDescendant"
+          @up="expandedListShown = true"
+          @down="expandedListShown = true"
+          @enter="toggleShown"
+          @escape="collapse"
         >
           <div id="exp_wrapper" v-on="lstn">
             <button
               aria-haspopup="listbox"
               :aria-labelledby="labelId + ' ' + buttonId"
               :id="buttonId"
+              type="button"
+              ref="mainbutton"
+              @mouseup="toggleShown"
               v-attribute-helper:aria-expanded.removeonfalse="expandedListShown"
               class="allyop-select__button"
-              @click="toggleShown"
               v-text="buttonText"
             ></button>
             <ul
@@ -41,7 +47,7 @@
                 "
                 role="option"
                 :class="{ focused: activeDescendant == item.id }"
-                @click="focusItem(item)"
+                @mouseup="focusItem(item)"
               >
                 {{ item.text }}
               </li>
@@ -73,21 +79,38 @@ export default Vue.extend(IdGeneratorMixin).extend({
       type: String,
       required: true
     },
+    nonSelectedText: {
+      type: String,
+      default: "Bitte Auswahl treffen"
+    },
     items: {
       type: Array as () => Array<allySelectItem>,
       default: []
     }
   },
   methods: {
-    toggleShown() {
-      this.expandedListShown = !this.expandedListShown;
-      if (this.expandedListShown && this.$refs.listbox) {
-        Vue.nextTick(() => (this.$refs.listbox as HTMLUListElement).focus());
+    toggleShown(event: any) {
+      console.log(event);
+      if (!this.expandedListShown) {
+        this.show();
+      } else if (this.expandedListShown) {
+        this.collapse();
       }
     },
     focusItem(item: allySelectItem & { id: string }) {
       this.activeDescendant = item.id;
-      this.buttonText = item.text;
+    },
+    show(): void {
+      if (!this.expandedListShown) {
+        this.expandedListShown = true;
+        Vue.nextTick(() => (this.$refs.listbox as HTMLUListElement).focus());
+      }
+    },
+    collapse(): void {
+      if (this.expandedListShown) {
+        this.expandedListShown = false;
+        Vue.nextTick(() => (this.$refs.mainbutton as HTMLUListElement).focus());
+      }
     },
     getCalculatedId(item: allySelectItem) {
       return this.keyPrefix + item.value;
@@ -100,9 +123,18 @@ export default Vue.extend(IdGeneratorMixin).extend({
       labelId: this.getId(),
       keyPrefix: this.getId(),
       listboxId: this.getId(),
-      buttonText: "Bitte Auswahl treffen",
+      buttonText: this.nonSelectedText,
       activeDescendant: null as string | null
     };
+  },
+  watch: {
+    activeDescendant(id: string): void {
+      if (id) {
+        this.buttonText = this.innerItems.find(x => x.id == id).text;
+        return;
+      }
+      this.buttonText == this.nonSelectedText;
+    }
   },
   directives: {
     attributeHelper
