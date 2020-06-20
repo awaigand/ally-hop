@@ -5,6 +5,7 @@
       :items="testItems"
       v-model="value"
     ></allyop-select>
+    <button type="button">Just a button</button>
   </div>
 </template>
 <script lang="ts">
@@ -34,6 +35,14 @@ export default Vue.extend({
         {
           text: "Planium",
           value: "planium"
+        },
+        {
+          text: "Californium",
+          value: "californium"
+        },
+        {
+          text: "Eisen",
+          value: "eisen"
         }
       ] as Array<allySelectItem>
     };

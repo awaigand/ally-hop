@@ -14,45 +14,53 @@
           @enter="toggleShown"
           @escape="collapse"
         >
-          <div id="exp_wrapper" v-on="lstn">
-            <button
-              aria-haspopup="listbox"
-              :aria-labelledby="labelId + ' ' + buttonId"
-              :id="buttonId"
-              type="button"
-              ref="mainbutton"
-              @mouseup="toggleShown"
-              v-attribute-helper:aria-expanded.removeonfalse="expandedListShown"
-              class="allyop-select__button"
-              v-text="buttonText"
-            ></button>
-            <ul
-              ref="listbox"
-              :id="listboxId"
-              tabindex="-1"
-              class="allyop-select__list"
-              role="listbox"
-              v-attribute-helper:aria-activedescendant.removeonfalse="
-                activeDescendant
-              "
-              :aria-labelledby="labelId"
-              :class="listClasses"
-            >
-              <li
-                v-for="item in innerItems"
-                :key="item.value"
-                :id="item.id"
-                v-attribute-helper:aria-selected.removeonfalse="
-                  activeDescendant == item.id
+          <base-keystroke-filter
+            @filter="focusItemByText"
+            #default="{listners}"
+          >
+            <div id="exp_wrapper" v-on="{ ...lstn, ...listners }">
+              <button
+                aria-haspopup="listbox"
+                :aria-labelledby="labelId + ' ' + buttonId"
+                :id="buttonId"
+                type="button"
+                ref="mainbutton"
+                @mouseup="toggleShown"
+                v-attribute-helper:aria-expanded.removeonfalse="
+                  expandedListShown
                 "
-                role="option"
-                :class="{ focused: activeDescendant == item.id }"
-                @mouseup="focusItem(item)"
+                class="allyop-select__button"
+                v-text="buttonText"
+              ></button>
+              <ul
+                ref="listbox"
+                :id="listboxId"
+                tabindex="-1"
+                @blur="collapse(false)"
+                class="allyop-select__list"
+                role="listbox"
+                v-attribute-helper:aria-activedescendant.removeonfalse="
+                  activeDescendant
+                "
+                :aria-labelledby="labelId"
+                :class="listClasses"
               >
-                {{ item.text }}
-              </li>
-            </ul>
-          </div>
+                <li
+                  v-for="item in innerItems"
+                  :key="item.value"
+                  :id="item.id"
+                  v-attribute-helper:aria-selected.removeonfalse="
+                    activeDescendant == item.id
+                  "
+                  role="option"
+                  :class="{ focused: activeDescendant == item.id }"
+                  @mouseup="focusItem(item)"
+                >
+                  {{ item.text }}
+                </li>
+              </ul>
+            </div>
+          </base-keystroke-filter>
         </base-roving-focus>
       </div>
     </div>
@@ -63,6 +71,7 @@ import Vue from "vue";
 import attributeHelper from "../directives/attribute-helper";
 import IdGeneratorMixin from "../mixins/id-generator";
 import BaseRovingFocus from "./base/base-roving-focus.vue";
+import BaseKeystrokeFilter from "./base/base-keystroke-filter.vue";
 
 export type allySelectItem = {
   text: string;
@@ -72,7 +81,8 @@ export type allySelectItem = {
 export default Vue.extend(IdGeneratorMixin).extend({
   name: "allyop-select",
   components: {
-    BaseRovingFocus
+    BaseRovingFocus,
+    BaseKeystrokeFilter
   },
   props: {
     label: {
@@ -97,6 +107,16 @@ export default Vue.extend(IdGeneratorMixin).extend({
         this.collapse();
       }
     },
+    focusItemByText(text: string | null) {
+      if (text != null && text.length > 0) {
+        const filteredItems = this.innerItems.filter(x =>
+          x.text.toLowerCase().startsWith(text.toLowerCase())
+        );
+        if (filteredItems[0]) {
+          this.focusItem(filteredItems[0]);
+        }
+      }
+    },
     focusItem(item: allySelectItem & { id: string }) {
       this.activeDescendant = item.id;
     },
@@ -106,10 +126,14 @@ export default Vue.extend(IdGeneratorMixin).extend({
         Vue.nextTick(() => (this.$refs.listbox as HTMLUListElement).focus());
       }
     },
-    collapse(): void {
+    collapse(focusButton = true): void {
       if (this.expandedListShown) {
         this.expandedListShown = false;
-        Vue.nextTick(() => (this.$refs.mainbutton as HTMLUListElement).focus());
+        if (focusButton) {
+          Vue.nextTick(() =>
+            (this.$refs.mainbutton as HTMLUListElement).focus()
+          );
+        }
       }
     },
     getCalculatedId(item: allySelectItem) {
@@ -153,12 +177,20 @@ export default Vue.extend(IdGeneratorMixin).extend({
 </script>
 
 <style>
-*:focus {
+/**:focus {
   outline: 3px blue solid !important;
-}
+}*/
 .allyop-select__listbox-area {
   width: 100%;
   position: relative;
+}
+
+.allyop-select {
+  box-sizing: border-box;
+}
+
+.allyop-select * {
+  box-sizing: inherit;
 }
 
 .allyop-select .allyop-select__button {
@@ -167,30 +199,8 @@ export default Vue.extend(IdGeneratorMixin).extend({
   min-height: 1em;
 }
 
-.allyop-select .annotate {
-  font-style: italic;
-  color: #366ed4;
-}
-
-.allyop-select .left-area,
-.allyop-select .right-area {
-  box-sizing: border-box;
-  display: inline-block;
-  font-size: 14px;
-  vertical-align: top;
-  width: 50%;
-}
-
-.allyop-select .left-area {
-  padding-right: 10px;
-}
-
-.allyop-select .right-area {
-  padding-left: 10px;
-}
-
 .allyop-select [role="listbox"] {
-  min-height: 18em;
+  min-height: 1em;
   padding: 0;
   background: white;
   border: 1px solid #aaa;
@@ -198,7 +208,7 @@ export default Vue.extend(IdGeneratorMixin).extend({
 
 .allyop-select [role="option"] {
   display: block;
-  padding: 0 1em 0 1.5em;
+  padding: 0 0 0 1.5em;
   position: relative;
   line-height: 1.8em;
 }
@@ -215,10 +225,7 @@ export default Vue.extend(IdGeneratorMixin).extend({
 
 .allyop-select button {
   font-size: 16px;
-}
-
-.allyop-select button[aria-disabled="true"] {
-  opacity: 0.5;
+  width: 100%;
 }
 
 .allyop-select__button {
@@ -230,33 +237,8 @@ export default Vue.extend(IdGeneratorMixin).extend({
   position: relative;
 }
 
-.allyop-select__button::after {
-  width: 0;
-  height: 0;
-  border-left: 8px solid transparent;
-  border-right: 8px solid transparent;
-  border-top: 8px solid #aaa;
-  content: " ";
-  position: absolute;
-  right: 5px;
-  top: 10px;
-}
-
-.allyop-select__button[aria-expanded="true"]::after {
-  width: 0;
-  height: 0;
-  border-left: 8px solid transparent;
-  border-right: 8px solid transparent;
-  border-top: 0;
-  border-bottom: 8px solid #aaa;
-  content: " ";
-  position: absolute;
-  right: 5px;
-  top: 10px;
-}
-
 .allyop-select__list {
-  border-top: 0;
+  border: 0;
   max-height: 10em;
   overflow-y: auto;
   position: absolute;
@@ -267,20 +249,6 @@ export default Vue.extend(IdGeneratorMixin).extend({
 .hidden {
   display: none;
 }
-
-.toolbar {
-  font-size: 0;
-}
-
-.toolbar-item {
-  border: 1px solid #aaa;
-  background: #ccc;
-}
-
-.toolbar-item[aria-disabled="false"]:focus {
-  background-color: #eee;
-}
-
 .offscreen {
   clip: rect(1px 1px 1px 1px);
   clip: rect(1px, 1px, 1px, 1px);
