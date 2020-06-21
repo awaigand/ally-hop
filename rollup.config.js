@@ -7,14 +7,14 @@ export default {
   input: "src/main-lib.ts",
   output: {
     format: "esm",
-    file: "./dist/library.js"
+    file: "./dist/library.js",
   },
   plugins: [
     commonjs(),
     typescript({
       experimentalDecorators: true,
-      module: "es2015"
+      module: "es2015",
     }),
-    vue()
-  ]
+    vue(),
+  ],
 };

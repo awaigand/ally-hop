@@ -7,13 +7,13 @@ export default Vue.extend({
   props: {
     filterTimeout: {
       type: Number,
-      default: 500
-    }
+      default: 500,
+    },
   },
   data() {
     return {
       typedSoFar: "" as string,
-      timeout: undefined as undefined | number
+      timeout: undefined as undefined | number,
     };
   },
   methods: {
@@ -32,17 +32,17 @@ export default Vue.extend({
         () => (this.typedSoFar = ""),
         this.filterTimeout
       );
-    }
+    },
   },
   watch: {
     typedSoFar(val: string): void {
       this.$emit("filter", val);
-    }
+    },
   },
   render(): any {
     return this.$scopedSlots.default!({
-      listners: { keydown: this.keydown }
+      listners: { keydown: this.keydown },
     });
-  }
+  },
 });
 </script>

@@ -14,7 +14,7 @@ import AllyopSelect, { allySelectItem } from "./components/allyop-select.vue";
 
 export default Vue.extend({
   components: {
-    AllyopSelect
+    AllyopSelect,
   },
   data() {
     return {
@@ -22,30 +22,54 @@ export default Vue.extend({
       testItems: [
         {
           text: "Neptunium",
-          value: "neptunium"
+          value: "neptunium",
         },
         {
           text: "Einsteinium",
-          value: "einsteinium"
+          value: "einsteinium",
         },
         {
           text: "Bohrium",
-          value: "bohr"
+          value: "bohr",
         },
         {
           text: "Planium",
-          value: "planium"
+          value: "planium",
         },
         {
           text: "Californium",
-          value: "californium"
+          value: "californium",
         },
         {
           text: "Eisen",
-          value: "eisen"
-        }
-      ] as Array<allySelectItem>
+          value: "eisen",
+        },
+        {
+          text: "Neptnium",
+          value: "neptnium",
+        },
+        {
+          text: "Einstinium",
+          value: "einstinium",
+        },
+        {
+          text: "Bohium",
+          value: "bor",
+        },
+        {
+          text: "Planum",
+          value: "planum",
+        },
+        {
+          text: "Califrnium",
+          value: "caliornium",
+        },
+        {
+          text: "Eisn",
+          value: "eien",
+        },
+      ] as Array<allySelectItem>,
     };
-  }
+  },
 });
 </script>

@@ -20,6 +20,6 @@ export default {
   methods: {
     getId(this: any): string {
       return idGenerator.next().value;
-    }
-  }
+    },
+  },
 };

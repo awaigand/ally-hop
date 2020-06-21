@@ -2,9 +2,7 @@
   <div class="allyop-select">
     <div class="allyop-select__listbox-area">
       <div>
-        <span :id="labelId">
-          {{ label }}
-        </span>
+        <span :id="labelId">{{ label }}</span>
         <base-roving-focus
           #default="{lstn}"
           :items="innerItems"
@@ -36,6 +34,7 @@
                 ref="listbox"
                 :id="listboxId"
                 tabindex="-1"
+                v-prevent-keys="['ArrowUp', 'ArrowDown']"
                 @blur="collapse(false)"
                 class="allyop-select__list"
                 role="listbox"
@@ -69,6 +68,7 @@
 <script lang="ts">
 import Vue from "vue";
 import attributeHelper from "../directives/attribute-helper";
+import preventKeys from "../directives/prevent-keys";
 import IdGeneratorMixin from "../mixins/id-generator";
 import BaseRovingFocus from "./base/base-roving-focus.vue";
 import BaseKeystrokeFilter from "./base/base-keystroke-filter.vue";
@@ -78,29 +78,32 @@ export type allySelectItem = {
   value: string;
 };
 
+function elementHasToScroll(ele: Element): boolean {
+  return ele.scrollHeight > ele.clientHeight;
+}
+
 export default Vue.extend(IdGeneratorMixin).extend({
   name: "allyop-select",
   components: {
     BaseRovingFocus,
-    BaseKeystrokeFilter
+    BaseKeystrokeFilter,
   },
   props: {
     label: {
       type: String,
-      required: true
+      required: true,
     },
     nonSelectedText: {
       type: String,
-      default: "Bitte Auswahl treffen"
+      default: "Bitte Auswahl treffen",
     },
     items: {
       type: Array as () => Array<allySelectItem>,
-      default: []
-    }
+      default: [],
+    },
   },
   methods: {
     toggleShown(event: any) {
-      console.log(event);
       if (!this.expandedListShown) {
         this.show();
       } else if (this.expandedListShown) {
@@ -109,7 +112,7 @@ export default Vue.extend(IdGeneratorMixin).extend({
     },
     focusItemByText(text: string | null) {
       if (text != null && text.length > 0) {
-        const filteredItems = this.innerItems.filter(x =>
+        const filteredItems = this.innerItems.filter((x) =>
           x.text.toLowerCase().startsWith(text.toLowerCase())
         );
         if (filteredItems[0]) {
@@ -138,7 +141,7 @@ export default Vue.extend(IdGeneratorMixin).extend({
     },
     getCalculatedId(item: allySelectItem) {
       return this.keyPrefix + item.value;
-    }
+    },
   },
   data() {
     return {
@@ -148,31 +151,44 @@ export default Vue.extend(IdGeneratorMixin).extend({
       keyPrefix: this.getId(),
       listboxId: this.getId(),
       buttonText: this.nonSelectedText,
-      activeDescendant: null as string | null
+      activeDescendant: null as string | null,
     };
   },
   watch: {
     activeDescendant(id: string): void {
+      const activeElement = document.getElementById(id)!;
+      const listbox = this.$refs["listbox"]! as Element;
+      if (elementHasToScroll(listbox)) {
+        var scrollBottom = listbox.clientHeight + listbox.scrollTop;
+        var elementBottom =
+          activeElement.offsetTop + activeElement.offsetHeight;
+        if (elementBottom > scrollBottom) {
+          listbox.scrollTop = elementBottom - listbox.clientHeight;
+        } else if (activeElement.offsetTop < listbox.scrollTop) {
+          listbox.scrollTop = activeElement.offsetTop;
+        }
+      }
       if (id) {
-        this.buttonText = this.innerItems.find(x => x.id == id).text;
+        this.buttonText = this.innerItems.find((x) => x.id == id).text;
         return;
       }
       this.buttonText == this.nonSelectedText;
-    }
+    },
   },
   directives: {
-    attributeHelper
+    attributeHelper,
+    preventKeys,
   },
   computed: {
     listClasses(): Record<string, boolean> {
       return {
-        hidden: !this.expandedListShown
+        hidden: !this.expandedListShown,
       };
     },
     innerItems(): Array<any> {
-      return this.items.map(x => ({ ...x, id: this.getCalculatedId(x) }));
-    }
-  }
+      return this.items.map((x) => ({ ...x, id: this.getCalculatedId(x) }));
+    },
+  },
 });
 </script>
 

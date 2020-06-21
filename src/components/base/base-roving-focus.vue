@@ -10,36 +10,36 @@ export default Vue.extend({
   name: "base-roving-focus",
   props: {
     items: {
-      type: Array as () => Array<hasId>
+      type: Array as () => Array<hasId>,
     },
     activeElementId: {
-      type: String
+      type: String,
     },
     downTriggers: {
       type: Array as () => Array<string>,
-      default: () => ["ArrowDown"]
+      default: () => ["ArrowDown"],
     },
     upTriggers: {
       type: Array as () => Array<string>,
-      default: () => ["ArrowUp"]
+      default: () => ["ArrowUp"],
     },
     enterTriggers: {
       type: Array as () => Array<string>,
-      default: () => ["Enter"]
+      default: () => ["Enter"],
     },
     closeTriggers: {
       type: Array as () => Array<string>,
-      default: () => ["Escape"]
-    }
+      default: () => ["Escape"],
+    },
   },
   render(): any {
     return this.$scopedSlots!.default!({
-      lstn: this.listeners
+      lstn: this.listeners,
     })![0];
   },
   data() {
     return {
-      listeners: {}
+      listeners: {},
     };
   },
   mounted() {
@@ -48,14 +48,14 @@ export default Vue.extend({
   methods: {
     createListeners(): any {
       const downs = this.downTriggers.reduce((obj, key) => {
-        obj["keyup"] = evt => this.handleKeystroke(evt);
+        obj["keyup"] = (evt) => this.handleKeystroke(evt);
         return obj;
       }, {});
 
       return { ...downs };
     },
     getActiveElementIndex(): number {
-      return this.items.findIndex(x => x.id == this.activeElementId);
+      return this.items.findIndex((x) => x.id == this.activeElementId);
     },
     moveFocusDown(): void {
       let nextIndex = this.getActiveElementIndex() + 1;
@@ -73,22 +73,22 @@ export default Vue.extend({
     },
     handleKeystroke(event: KeyboardEvent): void {
       let nextIndex = 0;
-      if (this.downTriggers.some(x => x == event.key)) {
+      if (this.downTriggers.some((x) => x == event.key)) {
         event.preventDefault();
         nextIndex = this.moveFocusDown();
         this.$emit("down");
         this.$emit("update:activeElementId", this.items[nextIndex].id);
-      } else if (this.upTriggers.some(x => x == event.key)) {
+      } else if (this.upTriggers.some((x) => x == event.key)) {
         event.preventDefault();
         nextIndex = this.moveFocusUp();
         this.$emit("up");
         this.$emit("update:activeElementId", this.items[nextIndex].id);
-      } else if (this.enterTriggers.some(x => x == event.key)) {
+      } else if (this.enterTriggers.some((x) => x == event.key)) {
         this.$emit("enter");
-      } else if (this.closeTriggers.some(x => x == event.key)) {
+      } else if (this.closeTriggers.some((x) => x == event.key)) {
         this.$emit("escape");
       }
-    }
-  }
+    },
+  },
 });
 </script>
